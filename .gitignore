@@ -1,0 +1,26 @@
+# Configuration (contains secrets)
+resources/config.php
+
+# Auth files (production only)
+public_html/index.php
+public_html/login.php
+public_html/create-user.php
+resources/functions.php
+
+# Logs
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Misc
+*.bak
+*.tmp
+txt

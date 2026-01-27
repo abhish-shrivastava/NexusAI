@@ -1,0 +1,661 @@
+/* ===================================
+   NexusAI Chat Application
+   Professional Theme - Dark Mode
+   VS Code Inspired
+   =================================== */
+
+/* Dark Theme - True Black/Dark Grey like VS Code */
+[data-theme="dark"] {
+  /* Override with dark theme colors */
+  --bg-primary: #1e1e1e;
+  --bg-secondary: #181818;
+  --bg-tertiary: #252526;
+  --bg-elevated: #2d2d2d;
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+  
+  --text-primary: #cccccc;
+  --text-secondary: #9d9d9d;
+  --text-tertiary: #6e6e6e;
+  --text-muted: #4d4d4d;
+  --text-inverse: #1e1e1e;
+  
+  --border-primary: #2d2d2d;
+  --border-secondary: #3e3e3e;
+  --border-focus: var(--color-accent);
+  
+  /* Message Colors */
+  --bg-user-message: #252526;
+  --bg-ai-message: #1e1e1e;
+  --border-message: #2d2d2d;
+  
+  /* Code Block - same as VS Code */
+  --bg-code: #1e1e1e;
+  --text-code: #d4d4d4;
+  
+  /* Accent adjustments */
+  --color-accent: #0078d4;
+  --color-accent-hover: #1e8ad4;
+  --color-accent-muted: rgba(0, 120, 212, 0.15);
+  
+  /* Shadows for dark mode */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
+  --shadow-overlay: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+
+/* ===================================
+   Dark Theme Specific Overrides
+   =================================== */
+
+[data-theme="dark"] body {
+  background-color: #0d0d0d;
+}
+
+[data-theme="dark"] .tab-bar {
+  background-color: #181818;
+  border-bottom-color: #252526;
+}
+
+[data-theme="dark"] .tab-item {
+  background-color: transparent;
+}
+
+[data-theme="dark"] .tab-item:hover {
+  background-color: #2d2d2d;
+}
+
+[data-theme="dark"] .tab-item.active,
+[data-theme="dark"] .tab-item[aria-selected="true"] {
+  background-color: #1e1e1e;
+  border-color: #2d2d2d;
+}
+
+[data-theme="dark"] .tab-name {
+  color: #9d9d9d;
+}
+
+[data-theme="dark"] .tab-item.active .tab-name,
+[data-theme="dark"] .tab-item[aria-selected="true"] .tab-name {
+  color: #cccccc;
+}
+
+[data-theme="dark"] .tab-add {
+  background-color: transparent;
+  border-color: #3e3e3e;
+  color: #9d9d9d;
+}
+
+[data-theme="dark"] .tab-add:hover {
+  background-color: #2d2d2d;
+  color: #cccccc;
+}
+
+/* Settings Panel */
+[data-theme="dark"] .settings-panel {
+  background-color: #1e1e1e;
+  border-bottom-color: #2d2d2d;
+}
+
+[data-theme="dark"] .settings-header:hover {
+  background-color: #252526;
+}
+
+[data-theme="dark"] .settings-body {
+  background-color: #1e1e1e;
+  border-top-color: #2d2d2d;
+}
+
+[data-theme="dark"] .settings-panel.overlay-mode {
+  background-color: #1e1e1e;
+}
+
+/* Preset Selector */
+[data-theme="dark"] .preset-selector-wrapper {
+  border-bottom-color: #3e3e3e;
+}
+
+[data-theme="dark"] .preset-select {
+  background-color: #252526;
+  border-color: #3e3e3e;
+  color: #cccccc;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239d9d9d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+}
+
+[data-theme="dark"] .preset-select:hover {
+  border-color: #4e4e4e;
+  background-color: #2d2d2d;
+}
+
+[data-theme="dark"] .preset-select:focus {
+  border-color: #0078d4;
+  background-color: #1e1e1e;
+}
+
+[data-theme="dark"] .preset-select option {
+  background-color: #1e1e1e;
+  color: #cccccc;
+}
+
+[data-theme="dark"] .preset-select optgroup {
+  background-color: #252526;
+  color: #9d9d9d;
+}
+
+[data-theme="dark"] .preset-select option:disabled {
+  color: #6e6e6e;
+}
+
+[data-theme="dark"] .settings-toggle-btn {
+  border-color: #3e3e3e;
+  color: #9d9d9d;
+}
+
+[data-theme="dark"] .settings-toggle-btn:hover {
+  background-color: #2d2d2d;
+  color: #cccccc;
+}
+
+/* Inputs */
+[data-theme="dark"] .input-wrapper input,
+[data-theme="dark"] .input-wrapper textarea,
+[data-theme="dark"] input[type="number"] {
+  background-color: #252526;
+  border-color: #3e3e3e;
+  color: #cccccc;
+}
+
+[data-theme="dark"] .input-wrapper input:hover,
+[data-theme="dark"] .input-wrapper textarea:hover,
+[data-theme="dark"] input[type="number"]:hover {
+  border-color: #4e4e4e;
+}
+
+[data-theme="dark"] .input-wrapper input:focus,
+[data-theme="dark"] .input-wrapper textarea:focus,
+[data-theme="dark"] input[type="number"]:focus {
+  background-color: #1e1e1e;
+  border-color: var(--color-accent);
+}
+
+[data-theme="dark"] .input-wrapper input::placeholder,
+[data-theme="dark"] .input-wrapper textarea::placeholder {
+  color: #6e6e6e;
+}
+
+[data-theme="dark"] .input-copy-btn,
+[data-theme="dark"] .input-toggle-password {
+  color: #6e6e6e;
+}
+
+[data-theme="dark"] .input-copy-btn:hover,
+[data-theme="dark"] .input-toggle-password:hover {
+  background-color: #3e3e3e;
+  color: #cccccc;
+}
+
+/* Range Input */
+[data-theme="dark"] input[type="range"] {
+  background: #3e3e3e;
+}
+
+[data-theme="dark"] input[type="range"]::-webkit-slider-thumb {
+  background: var(--color-accent);
+}
+
+/* Theme Toggle */
+[data-theme="dark"] .theme-toggle {
+  background-color: var(--color-accent);
+}
+
+[data-theme="dark"] .theme-toggle-slider {
+  background-color: #1e1e1e;
+}
+
+[data-theme="dark"] .theme-toggle-slider svg {
+  color: var(--color-accent);
+}
+
+/* Chat Area */
+[data-theme="dark"] .chat-area {
+  background-color: #1e1e1e;
+}
+
+[data-theme="dark"] .chat-messages::-webkit-scrollbar-thumb {
+  background: #3e3e3e;
+}
+
+[data-theme="dark"] .chat-messages::-webkit-scrollbar-thumb:hover {
+  background: #4e4e4e;
+}
+
+/* Messages */
+[data-theme="dark"] .message-user .message-avatar {
+  background-color: var(--color-accent);
+}
+
+[data-theme="dark"] .message-ai .message-avatar {
+  background-color: #4e4e4e;
+}
+
+[data-theme="dark"] .message-content {
+  border-color: #2d2d2d;
+}
+
+[data-theme="dark"] .message-user .message-content {
+  background-color: #252526;
+}
+
+[data-theme="dark"] .message-ai .message-content {
+  background-color: #1e1e1e;
+}
+
+[data-theme="dark"] .message-copy-btn {
+  background: #2d2d2d;
+  border-color: #3e3e3e;
+  color: #9d9d9d;
+}
+
+[data-theme="dark"] .message-copy-btn:hover {
+  background-color: #3e3e3e;
+  color: #cccccc;
+}
+
+/* Inline Code */
+[data-theme="dark"] .message-content code:not(pre code) {
+  background-color: #3e3e3e;
+  color: #d4d4d4;
+}
+
+/* Code Blocks - VS Code Style */
+[data-theme="dark"] .code-block-wrapper {
+  border-color: #3e3e3e;
+}
+
+[data-theme="dark"] .code-block-header {
+  background-color: #252526;
+  border-bottom-color: #3e3e3e;
+}
+
+[data-theme="dark"] .code-block-language {
+  color: #858585;
+}
+
+[data-theme="dark"] .code-block-copy {
+  border-color: #4e4e4e;
+  color: #858585;
+}
+
+[data-theme="dark"] .code-block-copy:hover {
+  background-color: #3e3e3e;
+  border-color: #5e5e5e;
+  color: #cccccc;
+}
+
+[data-theme="dark"] .code-block-wrapper pre {
+  background-color: #1e1e1e;
+}
+
+/* Tables */
+[data-theme="dark"] .message-content th,
+[data-theme="dark"] .message-content td {
+  border-color: #3e3e3e;
+}
+
+[data-theme="dark"] .message-content th {
+  background-color: #252526;
+}
+
+/* Chat Input */
+[data-theme="dark"] .chat-input-area {
+  background-color: #1e1e1e;
+  border-top-color: #2d2d2d;
+}
+
+[data-theme="dark"] .chat-input {
+  background-color: #252526;
+  border-color: #3e3e3e;
+  color: #cccccc;
+}
+
+[data-theme="dark"] .chat-input:hover {
+  border-color: #4e4e4e;
+}
+
+[data-theme="dark"] .chat-input:focus {
+  background-color: #1e1e1e;
+  border-color: var(--color-accent);
+}
+
+[data-theme="dark"] .chat-input::placeholder {
+  color: #6e6e6e;
+}
+
+[data-theme="dark"] .chat-input-copy {
+  color: #6e6e6e;
+}
+
+[data-theme="dark"] .chat-input-copy:hover {
+  background-color: #3e3e3e;
+  color: #cccccc;
+}
+
+[data-theme="dark"] .chat-send-btn {
+  background-color: var(--color-accent);
+}
+
+[data-theme="dark"] .chat-send-btn:hover:not(:disabled) {
+  background-color: var(--color-accent-hover);
+}
+
+[data-theme="dark"] .chat-send-btn:disabled {
+  background-color: #3e3e3e;
+}
+
+/* Toast */
+[data-theme="dark"] .toast {
+  background-color: #2d2d2d;
+  border-color: #3e3e3e;
+}
+
+/* Typing Indicator */
+[data-theme="dark"] .typing-indicator span {
+  background-color: #6e6e6e;
+}
+
+/* Empty State */
+[data-theme="dark"] .chat-empty-state-icon {
+  color: #4e4e4e;
+}
+
+/* ===================================
+   Syntax Highlighting - VS Code Dark+
+   =================================== */
+
+[data-theme="dark"] .hljs {
+  background: #1e1e1e;
+  color: #d4d4d4;
+}
+
+[data-theme="dark"] .hljs-keyword,
+[data-theme="dark"] .hljs-selector-tag,
+[data-theme="dark"] .hljs-literal,
+[data-theme="dark"] .hljs-section,
+[data-theme="dark"] .hljs-link {
+  color: #569cd6;
+}
+
+[data-theme="dark"] .hljs-string,
+[data-theme="dark"] .hljs-title,
+[data-theme="dark"] .hljs-name,
+[data-theme="dark"] .hljs-type,
+[data-theme="dark"] .hljs-attribute,
+[data-theme="dark"] .hljs-symbol,
+[data-theme="dark"] .hljs-bullet,
+[data-theme="dark"] .hljs-addition,
+[data-theme="dark"] .hljs-variable,
+[data-theme="dark"] .hljs-template-tag,
+[data-theme="dark"] .hljs-template-variable {
+  color: #ce9178;
+}
+
+[data-theme="dark"] .hljs-comment,
+[data-theme="dark"] .hljs-quote,
+[data-theme="dark"] .hljs-deletion,
+[data-theme="dark"] .hljs-meta {
+  color: #6a9955;
+}
+
+[data-theme="dark"] .hljs-function,
+[data-theme="dark"] .hljs-title.function_ {
+  color: #dcdcaa;
+}
+
+[data-theme="dark"] .hljs-class,
+[data-theme="dark"] .hljs-title.class_ {
+  color: #4ec9b0;
+}
+
+[data-theme="dark"] .hljs-number,
+[data-theme="dark"] .hljs-built_in {
+  color: #b5cea8;
+}
+
+[data-theme="dark"] .hljs-params {
+  color: #9cdcfe;
+}
+
+[data-theme="dark"] .hljs-property {
+  color: #9cdcfe;
+}
+
+[data-theme="dark"] .hljs-punctuation {
+  color: #d4d4d4;
+}
+
+[data-theme="dark"] .hljs-attr {
+  color: #9cdcfe;
+}
+
+[data-theme="dark"] .hljs-regexp {
+  color: #d16969;
+}
+
+/* ===================================
+   KaTeX Dark Theme
+   =================================== */
+
+[data-theme="dark"] .katex {
+  color: #cccccc;
+}
+
+/* ===================================
+   Advanced Settings
+   =================================== */
+
+[data-theme="dark"] .advanced-settings {
+  border-top-color: #2d2d2d;
+}
+
+/* ===================================
+   Continue Button (Dark Mode)
+   =================================== */
+
+[data-theme="dark"] .continue-wrapper {
+  background-color: #181818;
+  border-top-color: #2d2d2d;
+}
+
+[data-theme="dark"] .continue-btn {
+  background-color: rgba(0, 120, 212, 0.15);
+  border-color: #0078d4;
+  color: #4da6ff;
+}
+
+[data-theme="dark"] .continue-btn:hover {
+  background-color: #0078d4;
+  color: #ffffff;
+}
+
+/* ===================================
+   Info Tooltips & Toggle Labels (Dark Mode)
+   =================================== */
+
+[data-theme="dark"] .info-tooltip {
+  color: #6e6e6e;
+}
+
+[data-theme="dark"] .info-tooltip:hover {
+  color: #9d9d9d;
+}
+
+[data-theme="dark"] .setting-hint {
+  color: #6e6e6e;
+}
+
+[data-theme="dark"] .toggle-label input[type="checkbox"] {
+  accent-color: #0078d4;
+}
+
+/* ===================================
+   Generated Images (Dark Mode)
+   =================================== */
+
+[data-theme="dark"] .generated-image {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* ===================================
+   Action Buttons (Dark Mode)
+   =================================== */
+
+[data-theme="dark"] .action-btn {
+  background-color: #2d2d2d;
+  border-color: #3e3e3e;
+  color: #9d9d9d;
+}
+
+[data-theme="dark"] .action-btn:hover {
+  background-color: #3e3e3e;
+  border-color: #4e4e4e;
+  color: #cccccc;
+}
+
+[data-theme="dark"] .action-btn-danger {
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.3);
+}
+
+[data-theme="dark"] .action-btn-danger:hover {
+  background-color: rgba(248, 113, 113, 0.1);
+  border-color: #f87171;
+  color: #f87171;
+}
+
+/* ===================================
+   Advanced Toggle Button (Dark Mode)
+   =================================== */
+
+[data-theme="dark"] .advanced-toggle-btn {
+  background-color: #252526;
+  border-color: #3e3e3e;
+  color: #9d9d9d;
+}
+
+[data-theme="dark"] .advanced-toggle-btn:hover {
+  background-color: #2d2d2d;
+  border-color: #4e4e4e;
+  color: #cccccc;
+}
+
+/* ===================================
+   File Attachment (Dark Mode)
+   =================================== */
+
+[data-theme="dark"] .attach-btn {
+  background-color: #2d2d2d;
+  border-color: #3e3e3e;
+  color: #9d9d9d;
+}
+
+[data-theme="dark"] .attach-btn:hover {
+  background-color: #3e3e3e;
+  border-color: #4e4e4e;
+  color: #0078d4;
+}
+
+[data-theme="dark"] .attachments-preview {
+  background-color: #252526;
+  border-color: #3e3e3e;
+}
+
+[data-theme="dark"] .attachment-item {
+  background-color: #1e1e1e;
+  border-color: #3e3e3e;
+}
+
+[data-theme="dark"] .attachment-icon {
+  color: #6e6e6e;
+}
+
+[data-theme="dark"] .attachment-name {
+  color: #9d9d9d;
+}
+
+[data-theme="dark"] .attachment-remove {
+  color: #6e6e6e;
+}
+
+[data-theme="dark"] .attachment-remove:hover {
+  background-color: rgba(248, 113, 113, 0.15);
+  color: #f87171;
+}
+
+/* ===================================
+   Error Message (Dark Mode)
+   =================================== */
+
+[data-theme="dark"] .message-error {
+  background-color: rgba(248, 113, 113, 0.08);
+  border-color: rgba(248, 113, 113, 0.2);
+}
+
+[data-theme="dark"] .message-error .message-header {
+  color: #f87171;
+}
+
+[data-theme="dark"] .message-error .error-avatar {
+  background-color: rgba(248, 113, 113, 0.15);
+  color: #f87171;
+}
+
+[data-theme="dark"] .message-error .error-content {
+  color: #f87171;
+}
+
+/* ===================================
+   Retry Button (Dark Mode)
+   =================================== */
+
+[data-theme="dark"] .message-retry-btn {
+  color: #6e6e6e;
+}
+
+[data-theme="dark"] .message-retry-btn:hover {
+  background-color: #3e3e3e;
+  color: #0078d4;
+}
+
+/* ===================================
+   Auto Dark Mode based on System Preference
+   Disabled - Light theme is default
+   User must manually toggle dark mode
+   =================================== */
+
+/* 
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #181818;
+    --bg-tertiary: #252526;
+    --bg-elevated: #2d2d2d;
+    
+    --text-primary: #cccccc;
+    --text-secondary: #9d9d9d;
+    --text-tertiary: #6e6e6e;
+    --text-muted: #4d4d4d;
+    
+    --border-primary: #2d2d2d;
+    --border-secondary: #3e3e3e;
+    
+    --bg-user-message: #252526;
+    --bg-ai-message: #1e1e1e;
+    --border-message: #2d2d2d;
+    
+    --color-accent: #0078d4;
+    --color-accent-hover: #1e8ad4;
+    --color-accent-muted: rgba(0, 120, 212, 0.15);
+  }
+}
+*/

@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NexusAI - A modern AI chat application with multi-tab support">
+  <meta name="theme-color" content="#0a0a0a">
+  
+  <!-- PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NexusAI">
+  
+  <title>NexusAI - AI Chat Application</title>
+  
+  <!-- Preconnect for external resources -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/app-dark.css">
+
+  <!-- KaTeX for math rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
+  
+  <!-- Highlight.js for code syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" crossorigin="anonymous" referrerpolicy="no-referrer">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+
+  <style>
+    /* Critical CSS for initial load */
+    .app-loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background-color: #fafafa;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .app-loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 2px solid #e5e5e5;
+      border-top-color: #171717;
+      border-radius: 50%;
+      animation: spinner 0.6s linear infinite;
+    }
+    
+    @keyframes spinner {
+      to { transform: rotate(360deg); }
+    }
+    
+    [data-theme="dark"] .app-loading {
+      background-color: #0a0a0a;
+    }
+    
+    [data-theme="dark"] .app-loading-spinner {
+      border-color: #262626;
+      border-top-color: #fafafa;
+    }
+  </style>
+</head>
+<body>
+  <!-- Skip Link for Accessibility -->
+  <a href="#main" class="skip-link">Skip to main content</a>
+  
+  <!-- Loading State (shown before JS loads) -->
+  <div id="app-loading" class="app-loading" aria-label="Loading application">
+    <div class="app-loading-spinner" aria-hidden="true"></div>
+    <span class="sr-only">Loading NexusAI...</span>
+  </div>
+  
+  <!-- App Header with Info/FAQ -->
+  <header id="app-header" class="app-header">
+    <div class="app-header-bar">
+      <div class="app-header-brand">
+        <svg class="app-header-logo" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+        <span class="app-header-title">Nexus-AI</span>
+      </div>
+      <button id="header-toggle" class="app-header-toggle" aria-label="Toggle help panel" aria-expanded="false">
+        <svg class="icon-menu" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        <svg class="icon-close" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+    <div id="header-content" class="app-header-content" aria-hidden="true">
+      <div class="info-card">
+        <h2 class="info-title">Welcome to Nexus-AI</h2>
+        <p class="info-subtitle">A lightweight, privacy-focused AI chat interface</p>
+        
+        <section class="info-section">
+          <h3>🔗 Source Code</h3>
+          <p>This project is open source! View the code, report issues, or contribute on GitHub:</p>
+          <a href="https://github.com/abhish-shrivastava/nexusai" target="_blank" rel="noopener noreferrer" class="info-link">
+            github.com/abhish-shrivastava/nexusai
+          </a>
+        </section>
+
+        <section class="info-section">
+          <h3>🔒 Privacy</h3>
+          <p>Your privacy matters. <strong>No chat history or API tokens are stored on any server.</strong> Everything is saved locally in your browser using IndexedDB. Clear your browser data to remove all traces.</p>
+        </section>
+
+        <section class="info-section">
+          <h3>🚀 Getting Started</h3>
+          <ul class="info-list">
+            <li>Click the <strong>+</strong> button to create a new chat tab</li>
+            <li>Expand <strong>Settings</strong> (click the gear icon) to configure your AI provider</li>
+            <li>Enter your API endpoint and token, or use a preset</li>
+            <li>Start chatting!</li>
+          </ul>
+        </section>
+
+        <section class="info-section">
+          <h3>🏠 Using Local AI platforms (Ollama, llama.cpp, Open WebUI etc.)</h3>
+          <p>You can also connect to locally-hosted AI servers:</p>
+          <ul class="info-list">
+            <li>First, download a version of this app locally on your system using the github link provided above and following the installation instructions.</li>
+            <li>Set the API URL to your local server's endpoint (e.g., <code>http://localhost:11434/v1/chat/completions</code>)</li>
+            <li>Leave the API token empty for local servers (unless configured otherwise)</li>
+            <li>Use the model name as shown in your local server (e.g., <code>llama3</code>, <code>mistral</code>)</li>
+          </ul>
+        </section>
+
+        <section class="info-section">
+          <h3>⚠️ Troubleshooting</h3>
+          <dl class="info-dl">
+            <dt>DNS Error: Could not resolve host</dt>
+            <dd>This is usually a temporary network issue. Try refreshing or check your internet connection. On Windows, you can try flushing DNS cache: <code>ipconfig /flushdns</code></dd>
+            
+            <dt>CORS errors in browser console</dt>
+            <dd>The app uses a PHP proxy to avoid CORS issues. Make sure you're accessing via the PHP server (not opening the HTML file directly).</dd>
+            
+            <dt>SSL/TLS errors</dt>
+            <dd>Ensure your PHP installation has valid CA certificates. On Windows/XAMPP, you may need to configure <code>curl.cainfo</code> in php.ini.</dd>
+            
+            <dt>Local AI not connecting</dt>
+            <dd>Ensure your local AI server is running. Check that the port matches your configuration. Some servers may need CORS headers enabled.</dd>
+          </dl>
+        </section>
+
+        <footer class="info-footer">
+          <p>Made by <strong>Abhishek Shrivastava</strong></p>
+          <p>Sometimes I write on <a href="https://newgenstack.com" target="_blank" rel="noopener noreferrer">newgenstack.com</a></p>
+        </footer>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Application Container -->
+  <main id="main" class="app-container" style="display: none;" role="main">
+    <nav class="tab-bar" role="navigation" aria-label="Chat tabs">
+      <ul id="tab-list" class="tab-list" role="tablist" aria-label="Open chats">
+        <!-- Tabs will be dynamically inserted here -->
+      </ul>
+      <button id="tab-add-btn" 
+              class="tab-add" 
+              aria-label="Create new chat tab" 
+              title="New chat (Ctrl+T)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+    </nav>
+    
+    <div id="tab-panels" class="tab-panels">
+      <!-- Tab panels will be dynamically inserted here -->
+    </div>
+  </main>
+  
+  <div id="toast-container" class="toast-container" role="region" aria-label="Notifications" aria-live="polite"></div>
+
+  <!-- Templates -->
+  <template id="tab-button-template">
+    <li class="tab-item" role="tab" aria-selected="false" tabindex="-1">
+      <span class="tab-name" title="Double-click to rename"></span>
+      <button class="tab-close" aria-label="Close tab" title="Close tab">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </li>
+  </template>
+
+  <template id="tab-panel-template">
+    <div class="tab-panel" role="tabpanel" aria-hidden="true">
+      <!-- Settings Panel -->
+      <div class="settings-panel" data-field="settings-panel" role="region" aria-label="Chat settings">
+        <div class="settings-header" data-field="settings-header" role="button" tabindex="0" aria-expanded="false">
+          <div class="settings-header-left">
+            <span class="settings-chevron">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
+            <span class="settings-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </span>
+          </div>
+          <div class="settings-header-right">
+            <button class="action-btn action-btn-icon action-btn-danger" data-action="clear-chat" title="Clear chat history" aria-label="Clear chat history">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+            </button>
+            <button class="action-btn action-btn-icon" data-action="export-chat" title="Export chat as JSON" aria-label="Export chat as JSON">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            </button>
+            <div class="theme-toggle-wrapper">
+              <label class="theme-toggle" title="Toggle dark mode">
+                <input type="checkbox" data-field="theme-toggle" aria-label="Toggle dark mode">
+                <span class="theme-toggle-slider">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-body" data-field="settings-body" aria-hidden="true">
+          <div class="preset-selector-wrapper">
+            <label class="settings-label">
+              Quick Presets
+              <span class="info-tooltip" title="Select a pre-configured model">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              </span>
+            </label>
+            <select class="preset-select" data-field="preset-select" aria-label="Select a model preset"></select>
+          </div>
+
+          <div class="settings-grid">
+            <div class="settings-group">
+              <label class="settings-label">Model Name <span class="required-indicator" title="Required">*</span></label>
+              <div class="input-wrapper">
+                <input type="text" data-field="model-name" class="required-field" placeholder="e.g., gpt-4, claude-3" aria-required="true">
+                <button class="input-copy-btn" data-action="copy" aria-label="Copy model name" title="Copy"></button>
+              </div>
+            </div>
+
+            <div class="settings-group">
+              <label class="settings-label">API Endpoint <span class="required-indicator" title="Required">*</span></label>
+              <div class="input-wrapper">
+                <input type="url" data-field="api-url" class="required-field" placeholder="https://api.example.com/v1/chat/completions" aria-required="true">
+                <button class="input-copy-btn" data-action="copy" aria-label="Copy API URL" title="Copy"></button>
+              </div>
+            </div>
+
+            <div class="settings-group">
+              <label class="settings-label">API Token <span class="required-indicator" title="Required">*</span></label>
+              <div class="input-wrapper">
+                <input type="password" data-field="api-token" class="required-field" placeholder="sk-... or hf_..." aria-required="true">
+                <button class="input-toggle-password" data-action="toggle-password" aria-label="Toggle password visibility" title="Show/hide">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+                <button class="input-copy-btn" data-action="copy" aria-label="Copy API token" title="Copy"></button>
+              </div>
+            </div>
+
+            <div class="settings-group full-width">
+              <label class="settings-label">System Prompt</label>
+              <div class="input-wrapper">
+                <textarea data-field="system-prompt" placeholder="Define the AI's behavior..." rows="3"></textarea>
+                <button class="input-copy-btn" data-action="copy" aria-label="Copy system prompt" title="Copy"></button>
+              </div>
+            </div>
+          </div>
+
+          <button class="advanced-toggle-btn" data-action="toggle-advanced" aria-expanded="false">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>Advanced Settings</span>
+            <span class="advanced-toggle-chevron">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
+          </button>
+
+          <div class="advanced-settings" data-field="advanced-settings" aria-hidden="true">
+            <h3 class="advanced-settings-title">Advanced Configuration</h3>
+            <div class="advanced-grid">
+              <div class="settings-group">
+                <div class="range-wrapper">
+                  <div class="range-header">
+                    <label class="settings-label">Temperature</label>
+                    <span class="range-value" data-field="temperature-value">0.7</span>
+                  </div>
+                  <input type="range" data-field="temperature" min="0" max="2" step="0.1" value="0.7">
+                </div>
+              </div>
+
+              <div class="settings-group">
+                <div class="range-wrapper">
+                  <div class="range-header">
+                    <label class="settings-label">Top P</label>
+                    <span class="range-value" data-field="top-p-value">1.0</span>
+                  </div>
+                  <input type="range" data-field="top-p" min="0" max="1" step="0.05" value="1.0">
+                </div>
+              </div>
+
+              <div class="settings-group">
+                <label class="settings-label">
+                  Max Tokens
+                  <span class="info-tooltip" title="Maximum tokens in response">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  </span>
+                </label>
+                <input type="number" data-field="max-tokens" min="100" max="100000" value="6000">
+              </div>
+
+              <div class="settings-group">
+                <label class="settings-label">
+                  Context Messages
+                  <span class="info-tooltip" title="Number of recent messages to include">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  </span>
+                </label>
+                <input type="number" data-field="context-messages" min="5" max="100" value="30">
+              </div>
+
+              <div class="settings-group">
+                <label class="settings-label toggle-label">
+                  <input type="checkbox" data-field="direct-api">
+                  <span>Direct API</span>
+                  <span class="info-tooltip" title="Bypass proxy. May fail due to CORS.">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  </span>
+                </label>
+                <p class="setting-hint"><small>⚠️ May fail due to CORS</small></p>
+              </div>
+
+              <div class="settings-group">
+                <label class="settings-label toggle-label">
+                  <input type="checkbox" data-field="is-reasoning">
+                  <span>Reasoning Model</span>
+                  <span class="info-tooltip" title="Reasoning models expect different request format.">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                  </span>
+                </label>
+                <p class="setting-hint"><small>💡 Disables sampling penalties</small></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Area -->
+      <div class="chat-area">
+        <div class="chat-messages" data-field="chat-messages" role="log" aria-live="polite" aria-label="Chat messages">
+          <div class="chat-empty-state" data-field="empty-state">
+            <div class="chat-empty-state-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            </div>
+            <h3 class="chat-empty-state-title">Start a conversation</h3>
+            <p class="chat-empty-state-description">Click on Settings above to configure your AI, then send a message.</p>
+          </div>
+        </div>
+
+        <div class="chat-input-area">
+          <div class="continue-wrapper" data-field="continue-wrapper" style="display: none;">
+            <button class="continue-btn" data-action="continue" title="Response was truncated. Click to continue.">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+              <span>Continue ↻</span>
+            </button>
+          </div>
+
+          <div class="chat-input-wrapper">
+            <input type="file" data-field="file-input" class="file-input-hidden" accept=".pdf,.txt,.md,.json,.xml,.csv,.js,.ts,.jsx,.tsx,.py,.java,.c,.cpp,.h,.hpp,.css,.scss,.sass,.less,.html,.htm,.php,.rb,.go,.rs,.swift,.kt,.cs,.sh,.bash,.sql,.yaml,.yml,.toml,.ini,.cfg,.conf,.png,.jpg,.jpeg,.gif,.webp,.bmp,.svg,.docx" multiple aria-hidden="true">
+            <button class="attach-btn" data-action="attach" aria-label="Attach files" title="Attach files">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+            </button>
+            <div class="chat-input-container">
+              <div class="attachments-preview" data-field="attachments-preview" style="display: none;"></div>
+              <textarea class="chat-input" data-field="chat-input" placeholder="Type a message... (Enter to send, Shift+Enter for new line)" rows="1" aria-label="Message input"></textarea>
+              <button class="chat-input-copy" data-action="copy-input" aria-label="Copy message" title="Copy">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              </button>
+            </div>
+            <button class="chat-send-btn" data-action="send" aria-label="Send message" title="Send message">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template id="message-template">
+    <div class="message">
+      <div class="message-header">
+        <span class="message-avatar" aria-hidden="true"></span>
+        <span class="message-role"></span>
+        <span class="message-time"></span>
+      </div>
+      <div class="message-content">
+        <button class="message-copy-btn" aria-label="Copy message" title="Copy message">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        </button>
+      </div>
+    </div>
+  </template>
+
+  <template id="typing-indicator-template">
+    <div class="message message-ai typing-message">
+      <div class="message-header">
+        <span class="message-avatar" aria-hidden="true">AI</span>
+        <span class="message-role">AI</span>
+      </div>
+      <div class="typing-indicator" aria-label="AI is typing">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </template>
+
+  <template id="error-message-template">
+    <div class="message message-error" role="alert">
+      <div class="message-header">
+        <span class="message-avatar error-avatar" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        </span>
+        <span class="message-role">Error</span>
+      </div>
+      <div class="message-content error-content"></div>
+    </div>
+  </template>
+
+  <template id="attachment-item-template">
+    <div class="attachment-item">
+      <span class="attachment-icon"></span>
+      <span class="attachment-name"></span>
+      <button class="attachment-remove" aria-label="Remove attachment" title="Remove">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+    </div>
+  </template>
+  
+  <!-- Scripts for external libraries -->
+  <!-- Marked.js for markdown parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js" crossorigin="anonymous" defer></script>
+  
+  <!-- KaTeX for math rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous" defer></script>
+  
+  <!-- Highlight.js for code syntax highlighting -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
+  
+  <!-- PDF.js for PDF text extraction -->
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.mjs" type="module"></script>
+  
+  <!-- Mammoth.js for DOCX text extraction -->
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js" defer></script>
+  
+  <!-- Application Script (ES Modules) -->
+  <script type="module" src="assets/js/main.js"></script>
+  
+  <script>
+    window.addEventListener('load', function() {
+      // Small delay to ensure everything is initialized
+      setTimeout(function() {
+        var loading = document.getElementById('app-loading');
+        var main = document.querySelector('.app-container');
+        
+        if (loading) loading.style.display = 'none';
+        if (main) main.style.display = 'flex';
+      }, 100);
+    });
+    
+    // Handle theme preference before app loads to prevent flash
+    (function() {
+      try {
+        var savedTheme = localStorage.getItem('nexusai_theme');
+        if (savedTheme === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      } catch (e) {
+        console.error('Error applying saved theme:', e);
+      }
+    })();
+  </script>
+</body>
+</html>
