@@ -1,4 +1,4 @@
-# Configuration (contains secrets)
+# Configuration
 resources/config.php
 
 # Auth files (production only)
