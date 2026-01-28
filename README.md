@@ -67,6 +67,20 @@ nexusai/
     └── config.php        # (optional) server configuration file
 ```
 
+## Troubleshooting
+
+### DNS Error: Could not resolve host
+This is usually a temporary network issue. Try refreshing or check your internet connection. On Windows, you can try flushing DNS cache: `ipconfig /flushdns`
+
+### CORS errors in browser console
+The app uses a PHP proxy to avoid CORS issues. Make sure you're accessing via the PHP server (not opening the HTML file directly).
+
+### SSL/TLS errors
+Ensure your PHP installation has valid CA certificates. On Windows/XAMPP, you may need to configure `curl.cainfo` in `php.ini`.
+
+### Local AI not connecting
+Ensure your local AI server is running. Check that the port matches your configuration. Some servers may need CORS headers enabled.
+
 ## Keyboard Shortcuts
 
 | Key | Action |

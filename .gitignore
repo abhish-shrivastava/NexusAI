@@ -5,7 +5,11 @@ resources/config.php
 public_html/index.php
 public_html/login.php
 public_html/create-user.php
+public_html/yaatayat.php
+public_html/.htaccess
 resources/functions.php
+resources/yaatayat.php
+resources/vendor/
 
 # Logs
 logs/
@@ -24,3 +28,5 @@ Thumbs.db
 *.bak
 *.tmp
 txt
+
+newgenstack-temp/
