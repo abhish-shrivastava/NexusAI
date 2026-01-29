@@ -93,9 +93,9 @@ Ensure your local AI server is running. Check that the port matches your configu
 
 ## Context Summarization
 
-For long conversations, older messages are automatically summarized to fit within token limits. The model used for summarization is Llama 3.1 8B by default (you can change this in config.php). The platform used for summarization will be determined in the following order:
+For long conversations, older messages are automatically summarized to fit within token limits. The model used for summarization is Gemma-3-12b-it by default (you can change this in config.php). The platform used for summarization will be determined in the following order:
 
-1. **User's platform** - If the user's platform supports Llama 3.1 8B.
+1. **User's platform** - If the user's platform supports Gemma-3-12b-it.
 2. **Server fallback** - If not, the server-side configuration in `config.php` (if created) is used. 
 
 ## Contributing

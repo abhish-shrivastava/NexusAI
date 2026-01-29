@@ -562,7 +562,7 @@ function save_settings(tab_id) {
     system_prompt: get_val('system-prompt'),
     temperature: parseFloat(get_val('temperature')) || 0.7,
     top_p: parseFloat(get_val('top-p')) || 1.0,
-    max_tokens: parseInt(get_val('max-tokens')) || 6000,
+    max_tokens: parseInt(get_val('max-tokens')) || 4000,
     context_messages: parseInt(get_val('context-messages')) || 30,
     direct_api: get_checked('direct-api'),
     is_reasoning: get_checked('is-reasoning')
