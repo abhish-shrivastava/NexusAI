@@ -7,8 +7,8 @@ const CONFIG = {
   PROXY_URL: 'api.php',
   SUMMARIZE_URL: 'api.php',
   DEFAULT_CONTEXT_MESSAGES: 30,
-  SUMMARIZATION_MODEL: 'meta-llama/Llama-3.1-8B-Instruct',
-  SUMMARIZATION_ENDPOINT: 'https://router.huggingface.co/v1/chat/completions'
+  SUMMARIZATION_MODEL: 'google/gemma-3-12b-it:free',
+  SUMMARIZATION_ENDPOINT: 'https://openrouter.ai/api/v1/chat/completions'
 };
 
 /* Extract error message from various error response formats */
