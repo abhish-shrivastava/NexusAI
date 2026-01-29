@@ -11,6 +11,7 @@ const pollinations = new PollinationsAdapter();
 /* Adapters in priority order (OpenAI is fallback) */
 const ADAPTERS = [huggingface, pollinations, openai];
 
+/* Returns appropriate adapter for URL. Checks HuggingFace and Pollinations first, falls back to OpenAI */
 export function get_adapter(url) {
   if (!url) return openai;
 

@@ -93,7 +93,7 @@ export async function continue_response(tab_id, settings, context = {}) {
   }
 }
 
-/* Send request to AI API */
+/* Routes request through appropriate adapter based on API URL, handles proxy/direct modes */
 async function send_request(payload, settings, signal = null) {
   const adapter = get_adapter(settings.api_url);
   
@@ -352,6 +352,7 @@ function blob_to_data_url(blob) {
 
 /* Context Management */
 
+/* Builds context window from messages, applying limit and including summaries if available */
 async function build_context(all_messages, settings, stored_summaries = []) {
   const context_limit = settings.context_messages || CONFIG.DEFAULT_CONTEXT_MESSAGES;
   const valid_messages = all_messages.filter(msg => msg.content && msg.role);
@@ -376,11 +377,47 @@ async function build_context(all_messages, settings, stored_summaries = []) {
   return context;
 }
 
+/* Formats messages for API, converting image attachments to OpenAI Vision format */
 function format_messages_for_api(messages) {
-  return messages.map(msg => ({
-    role: msg.role,
-    content: msg.content
-  }));
+  return messages.map(msg => {
+    // If message has images, format as multimodal content (OpenAI Vision format)
+    if (msg.images && msg.images.length > 0) {
+      const content_parts = [];
+      
+      // Add text content first (remove the [Image: name] placeholders)
+      let text_content = msg.content;
+      // Remove image placeholder text like "[Image: cat.jpg]" since we're sending actual images
+      text_content = text_content.replace(/\n*---\n\*\*Attached Files:\*\*\n(\n\[Image: [^\]]+\]\n?)+/g, '').trim();
+      
+      if (text_content) {
+        content_parts.push({
+          type: 'text',
+          text: text_content
+        });
+      }
+      
+      // Add images in OpenAI vision format
+      msg.images.forEach(img => {
+        content_parts.push({
+          type: 'image_url',
+          image_url: {
+            url: img.data // base64 data URL
+          }
+        });
+      });
+      
+      return {
+        role: msg.role,
+        content: content_parts
+      };
+    }
+    
+    // Standard text-only message
+    return {
+      role: msg.role,
+      content: msg.content
+    };
+  });
 }
 
 /* Summarize messages via server */

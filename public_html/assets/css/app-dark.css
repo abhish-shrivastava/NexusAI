@@ -102,11 +102,6 @@
   background-color: #252526;
 }
 
-[data-theme="dark"] .settings-body {
-  background-color: #1e1e1e;
-  border-top-color: #2d2d2d;
-}
-
 [data-theme="dark"] .settings-panel.overlay-mode {
   background-color: #1e1e1e;
 }
@@ -319,15 +314,6 @@
   color: #cccccc;
 }
 
-[data-theme="dark"] .chat-input:hover {
-  border-color: #4e4e4e;
-}
-
-[data-theme="dark"] .chat-input:focus {
-  background-color: #1e1e1e;
-  border-color: var(--color-accent);
-}
-
 [data-theme="dark"] .chat-input::placeholder {
   color: #6e6e6e;
 }
@@ -504,6 +490,14 @@
 
 [data-theme="dark"] .generated-image {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] .attached-image {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .attached-image:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
 }
 
 /* ===================================

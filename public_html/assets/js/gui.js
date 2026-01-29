@@ -221,6 +221,7 @@ export function show_toast(message, type = 'success') {
 
 /* Preset Management */
 
+/* Retrieves user's custom presets from localStorage */
 function get_recent_presets() {
   try {
     const stored = localStorage.getItem('nexusai_recent_presets');
@@ -232,11 +233,12 @@ function get_recent_presets() {
   }
 }
 
-function add_to_recent_presets(preset_id, token = '') {
+function add_to_recent_presets(entry) {
   try {
     let recent = get_recent_presets();
-    recent = recent.filter(item => item.id !== preset_id);
-    recent.unshift({ id: preset_id, token });
+    // Remove existing entry with same model_name + api_url combo
+    recent = recent.filter(item => !(item.model_name === entry.model_name && item.api_url === entry.api_url));
+    recent.unshift(entry);
     recent = recent.slice(0, MAX_RECENT_PRESETS);
     localStorage.setItem('nexusai_recent_presets', JSON.stringify(recent));
   } catch (e) {
@@ -244,16 +246,50 @@ function add_to_recent_presets(preset_id, token = '') {
   }
 }
 
-function apply_preset(tab_id, preset_id) {
-  const preset = MODEL_PRESETS[preset_id];
-  if (!preset) return;
+/* Saves custom configuration to recent presets (excludes built-in presets) */
+function add_settings_to_recent(settings) {
+  const { model_name, api_url, api_token, label } = settings;
+  if (!model_name || !api_url) return;
 
+  // Skip if this matches a built-in preset
+  const is_builtin = Object.values(MODEL_PRESETS).some(p => 
+    p.model_name === model_name && p.api_url === api_url
+  );
+  if (is_builtin) return;
+
+  const platform = extract_platform_from_url(api_url);
+  add_to_recent_presets({
+    id: `custom_${Date.now()}`,
+    model_name,
+    api_url,
+    token: api_token || '',
+    label: label || model_name,
+    platform
+  });
+}
+
+/* Extracts platform name from API URL hostname */
+function extract_platform_from_url(url) {
+  try {
+    const hostname = new URL(url).hostname;
+    if (hostname.includes('openai.com')) return 'openai';
+    if (hostname.includes('openrouter.ai')) return 'openrouter';
+    if (hostname.includes('huggingface.co')) return 'huggingface';
+    if (hostname.includes('pollinations.ai')) return 'pollinations';
+    if (hostname.includes('anthropic.com')) return 'anthropic';
+    if (hostname.includes('groq.com')) return 'groq';
+    if (hostname.includes('together.xyz') || hostname.includes('together.ai')) return 'together';
+    // Return shortened hostname for unknown platforms
+    return hostname.replace('www.', '').split('.')[0];
+  } catch {
+    return 'api';
+  }
+}
+
+/* Applies a preset configuration to the current tab */
+function apply_preset(tab_id, preset_value) {
   const tab = app_state.tabs.find(t => t.id === tab_id);
   if (!tab) return;
-
-  const recent = get_recent_presets();
-  const recent_entry = recent.find(item => item.id === preset_id);
-  const saved_token = recent_entry?.token || '';
 
   const panel = document.getElementById(`panel-${tab_id}`);
   if (!panel) return;
@@ -262,26 +298,64 @@ function apply_preset(tab_id, preset_id) {
   const api_url_input = panel.querySelector('[data-field="api-url"]');
   const api_token_input = panel.querySelector('[data-field="api-token"]');
   const system_prompt_input = panel.querySelector('[data-field="system-prompt"]');
+  const label_input = panel.querySelector('[data-field="settings-label"]');
   const is_reasoning_input = panel.querySelector('[data-field="is-reasoning"]');
 
-  if (model_input) model_input.value = preset.model_name;
-  if (api_url_input) api_url_input.value = preset.api_url;
-  if (api_token_input && saved_token) api_token_input.value = saved_token;
-  if (system_prompt_input) system_prompt_input.value = preset.system_prompt;
-  if (is_reasoning_input) is_reasoning_input.checked = !!preset.is_reasoning;
+  let preset_label = '';
+  
+  // Custom preset from recent (format: "custom:model_name:api_url")
+  if (preset_value.startsWith('custom:')) {
+    const parts = preset_value.split(':');
+    const model_name = parts[1];
+    const api_url = parts.slice(2).join(':'); // Handle URLs with colons
+    
+    const recent = get_recent_presets();
+    const recent_entry = recent.find(item => item.model_name === model_name && item.api_url === api_url);
+    if (!recent_entry) return;
+    
+    if (model_input) model_input.value = recent_entry.model_name;
+    if (api_url_input) api_url_input.value = recent_entry.api_url;
+    if (api_token_input && recent_entry.token) api_token_input.value = recent_entry.token;
+    if (label_input) label_input.value = recent_entry.label || '';
+    
+    tab.settings.model_name = recent_entry.model_name;
+    tab.settings.api_url = recent_entry.api_url;
+    tab.settings.label = recent_entry.label || '';
+    if (recent_entry.token) tab.settings.api_token = recent_entry.token;
+    
+    preset_label = recent_entry.label || recent_entry.model_name;
+  } else {
+    // Built-in preset
+    const preset = MODEL_PRESETS[preset_value];
+    if (!preset) return;
+    
+    // Check if we have a saved token for this preset in recent
+    const recent = get_recent_presets();
+    const recent_entry = recent.find(item => 
+      item.model_name === preset.model_name && item.api_url === preset.api_url
+    );
+    const saved_token = recent_entry?.token || '';
 
-  tab.settings.model_name = preset.model_name;
-  tab.settings.api_url = preset.api_url;
-  tab.settings.system_prompt = preset.system_prompt;
-  tab.settings.is_reasoning = !!preset.is_reasoning;
-  if (saved_token) tab.settings.api_token = saved_token;
+    if (model_input) model_input.value = preset.model_name;
+    if (api_url_input) api_url_input.value = preset.api_url;
+    if (api_token_input && saved_token) api_token_input.value = saved_token;
+    if (system_prompt_input) system_prompt_input.value = preset.system_prompt;
+    if (label_input) label_input.value = '';
+    if (is_reasoning_input) is_reasoning_input.checked = !!preset.is_reasoning;
+
+    tab.settings.model_name = preset.model_name;
+    tab.settings.api_url = preset.api_url;
+    tab.settings.system_prompt = preset.system_prompt;
+    tab.settings.is_reasoning = !!preset.is_reasoning;
+    tab.settings.label = '';
+    if (saved_token) tab.settings.api_token = saved_token;
+    
+    preset_label = preset.label;
+  }
 
   storage.save_tab_data(tab).catch(err => console.error('Failed to save preset settings:', err));
-
-  const current_token = api_token_input?.value || saved_token;
-  add_to_recent_presets(preset_id, current_token);
-  update_all_preset_selectors();
-  show_toast(`Applied: ${preset.label}`, 'success');
+  
+  show_toast(`Applied: ${preset_label}`, 'success');
 }
 
 function build_preset_options() {
@@ -291,8 +365,10 @@ function build_preset_options() {
   if (recent.length > 0) {
     html += `<optgroup label="${PRESET_CATEGORIES.recent}">`;
     recent.forEach(item => {
-      const preset = MODEL_PRESETS[item.id];
-      if (preset) html += `<option value="${preset.id}">${preset.label}</option>`;
+      const label = item.label || item.model_name || 'Custom';
+      const platform = item.platform || 'api';
+      const value = `custom:${item.model_name}:${item.api_url}`;
+      html += `<option value="${value}" title="${platform}">${label} — ${platform}</option>`;
     });
     html += '</optgroup>';
   }
@@ -301,7 +377,10 @@ function build_preset_options() {
     const presets = Object.values(MODEL_PRESETS).filter(p => p.category === category);
     if (presets.length > 0) {
       html += `<optgroup label="${PRESET_CATEGORIES[category]}">`;
-      presets.forEach(preset => html += `<option value="${preset.id}">${preset.label}</option>`);
+      presets.forEach(preset => {
+        const platform_display = preset.platform || 'api';
+        html += `<option value="${preset.id}" title="${platform_display}">${preset.label} — ${platform_display}</option>`;
+      });
       html += '</optgroup>';
     }
   });
@@ -331,6 +410,7 @@ export function create_tab(options = {}) {
       model_name: '',
       api_url: '',
       api_token: '',
+      label: '',
       system_prompt: '',
       temperature: 0.7,
       top_p: 1.0,
@@ -421,6 +501,7 @@ function populate_settings(panel, settings) {
     'model-name': settings.model_name,
     'api-url': settings.api_url,
     'api-token': settings.api_token,
+    'settings-label': settings.label || '',
     'system-prompt': settings.system_prompt,
     'temperature': settings.temperature,
     'top-p': settings.top_p,
@@ -559,6 +640,7 @@ function save_settings(tab_id) {
     model_name: get_val('model-name'),
     api_url: get_val('api-url'),
     api_token: get_val('api-token'),
+    label: get_val('settings-label'),
     system_prompt: get_val('system-prompt'),
     temperature: parseFloat(get_val('temperature')) || 0.7,
     top_p: parseFloat(get_val('top-p')) || 1.0,
@@ -651,7 +733,8 @@ async function send_message(tab_id) {
     role: 'user',
     content: full_message_content,
     timestamp: Date.now(),
-    has_attachments: attachment_content.length > 0 || image_attachments.length > 0
+    has_attachments: attachment_content.length > 0 || image_attachments.length > 0,
+    images: image_attachments // Store image data for rendering
   };
 
   tab.messages.push(user_message);
@@ -692,6 +775,12 @@ async function send_message(tab_id) {
       tab.last_finish_reason = response.finish_reason;
       render_message(tab_id, ai_message);
       update_retry_buttons(tab_id);
+
+      // Add to recent presets on first successful message of this tab
+      if (tab.messages.filter(m => m.role === 'user').length === 1) {
+        add_settings_to_recent(tab.settings);
+        update_all_preset_selectors();
+      }
 
       if (response.finish_reason === 'length') show_continue_button(tab_id);
       if (response.context_summaries) tab.context_summaries = response.context_summaries;
@@ -840,6 +929,22 @@ export function render_message(tab_id, message, is_last_user_message = false) {
   const processed_content = process_message_content(message.content);
   const copy_btn = content.querySelector('.message-copy-btn');
   content.innerHTML = processed_content;
+  
+  // Render image attachments for user messages
+  if (message.images && message.images.length > 0) {
+    const images_container = document.createElement('div');
+    images_container.className = 'message-images';
+    message.images.forEach(img => {
+      const img_el = document.createElement('img');
+      img_el.src = img.data;
+      img_el.alt = img.name || 'Attached image';
+      img_el.className = 'attached-image';
+      img_el.loading = 'lazy';
+      images_container.appendChild(img_el);
+    });
+    content.insertBefore(images_container, content.firstChild);
+  }
+  
   content.appendChild(copy_btn);
 
   if (message.role === 'user' && is_last_user_message) {

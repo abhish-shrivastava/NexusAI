@@ -254,6 +254,13 @@
               </div>
             </div>
 
+            <div class="settings-group">
+              <label class="settings-label">Label</label>
+              <div class="input-wrapper">
+                <input type="text" data-field="settings-label" placeholder="e.g., My Creative Bot" aria-label="Custom label for this configuration">
+              </div>
+            </div>
+
             <div class="settings-group full-width">
               <label class="settings-label">System Prompt</label>
               <div class="input-wrapper">
@@ -444,7 +451,11 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" crossorigin="anonymous" referrerpolicy="no-referrer" defer></script>
   
   <!-- PDF.js for PDF text extraction -->
-  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.mjs" type="module"></script>
+  <script type="module">
+    import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.mjs';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs';
+    window.pdfjsLib = pdfjsLib;
+  </script>
   
   <!-- Mammoth.js for DOCX text extraction -->
   <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js" defer></script>

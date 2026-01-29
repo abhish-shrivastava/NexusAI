@@ -1,4 +1,4 @@
-/* NexusAI Storage Module - IndexedDB operations */
+/* NexusAI Storage Module - IndexedDB operations for persisting chat tabs and messages */
 
 const DB_NAME = 'nexusai_chat_db';
 const DB_VERSION = 1;
