@@ -85,9 +85,9 @@
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace;
   
-  --text-xs: 0.75rem;
-  --text-sm: 0.8125rem;
-  --text-base: 0.875rem;
+  --text-xs: 0.8rem;
+  --text-sm: 0.9rem;
+  --text-base: 0.95rem;
   --text-lg: 1rem;
   --text-xl: 1.125rem;
   
@@ -948,6 +948,7 @@ input[type="range"] {
   background: var(--border-primary);
   border-radius: var(--radius-full);
   outline: none;
+  appearance: none;
   -webkit-appearance: none;
   cursor: pointer;
 }

@@ -29,6 +29,7 @@ Thumbs.db
 # Misc
 *.bak
 *.tmp
+.hintrc
 txt
 
 newgenstack-temp/
