@@ -14,19 +14,19 @@ error_reporting(E_ALL);
  * Server-side Summarization (Optional)
  * 
  * For long conversations, the app can summarize older messages to save context.
- * If the user's API platform supports Llama 3.1 8B, their token is used.
+ * If the user's API platform supports Gemma-3-12b-it, their token is used.
  * Otherwise, this fallback token is used.
  * 
  * Leave empty to disable server-side fallback (summarization will only work
- * if user's platform supports Llama 3.1 8B)
+ * if user's platform supports Gemma-3-12b-it)
  */
 define('FALLBACK_HF_TOKEN', getenv('NEXUSAI_HF_TOKEN') ?: '');
 
-/* Summarization endpoint and model */
-define('FALLBACK_SUMMARIZE_URL', 'https://router.huggingface.co/novita/v3/openai/chat/completions');
-define('FALLBACK_SUMMARIZE_MODEL', 'meta-llama/llama-3.1-8b-instruct');
+/* Summarization endpoint and model (Gemma 3 12B from OpenRouter - free tier) */
+define('FALLBACK_SUMMARIZE_URL', 'https://openrouter.ai/api/v1/chat/completions');
+define('FALLBACK_SUMMARIZE_MODEL', 'google/gemma-3-12b-it:free');
 
-/* Platforms where user's token can be used for summarization (supports Llama 3.1 8B). You can edit this list */
+/* Platforms where user's token can be used for summarization (supports Gemma-3-12b-it). You can edit this list */
 define('SUMMARIZATION_CAPABLE_PATTERNS', [
     'huggingface.co',
     'openrouter.ai',

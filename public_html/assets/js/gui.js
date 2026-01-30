@@ -1,7 +1,8 @@
 /* NexusAI GUI Module - UI rendering, tab management, user interactions */
 
 import { storage } from './storage.js';
-import { send_chat_message, continue_response } from './api.js';
+import { send_chat_message, continue_response, get_debug_data } from './api.js';
+import { classify_error, get_error_message, should_report_error, handle_error } from './error.js';
 
 /* Application State */
 export const app_state = {
@@ -15,115 +16,107 @@ export const app_state = {
 
 /* Model Presets */
 const MODEL_PRESETS = {
-  'gemma-27b': {
-    id: 'gemma-27b',
-    label: '🌸 Gemma (Thoughtful Helper)',
-    category: 'general',
-    model_name: 'google/gemma-3-27b-it',
-    api_url: 'https://openrouter.ai/api/v1/chat/completions',
-    platform: 'openrouter',
-    system_prompt: `You are Gemma, a thoughtful and empathetic AI assistant. You approach every question with genuine curiosity and care. You explain complex topics in accessible ways, often using helpful analogies. You're patient, encouraging, and always aim to help users understand, not just get answers. When you're uncertain, you say so honestly.`
-  },
-  'llama-70b': {
-    id: 'llama-70b',
-    label: '🦙 Llama 3.3 (Versatile Genius)',
-    category: 'general',
-    model_name: 'meta-llama/Llama-3.3-70B-Instruct',
-    api_url: 'https://router.huggingface.co/v1/chat/completions',
-    platform: 'huggingface',
-    system_prompt: `You are a highly capable AI assistant powered by Llama 3.3. You excel at reasoning through complex problems, writing, analysis, and creative tasks. You're direct and efficient in your responses while remaining helpful and thorough. You break down complex topics systematically and provide actionable insights.`
-  },
-  'gpt-oss-120b': {
-    id: 'gpt-oss-120b',
-    label: '🧠 GPT-OSS 120B (Deep Thinker)',
-    category: 'general',
-    model_name: 'openai/gpt-oss-120b',
-    api_url: 'https://router.huggingface.co/v1/chat/completions',
-    platform: 'huggingface',
-    is_reasoning: true,
-    system_prompt: `You are an advanced AI reasoning assistant. You excel at deep analysis, nuanced thinking, and exploring ideas from multiple perspectives. You don't rush to conclusions—you think step by step, consider edge cases, and provide comprehensive, well-structured responses. You're great at research, writing, and solving complex problems.`
-  },
-  'mimo-v2': {
-    id: 'mimo-v2',
-    label: '📱 Gemini 2.5 flash lite (Quick & Friendly)',
-    category: 'general',
-    model_name: 'google/gemini-2.5-flash-lite',
-    api_url: 'https://openrouter.ai/api/v1/chat/completions',
-    platform: 'openrouter',
-    system_prompt: `You are a fast and friendly AI assistant! You're enthusiastic, helpful, and get straight to the point. You love making complex things simple and always aim to be practical and useful. Your responses are concise but complete. You use emojis sparingly to add warmth. Help the user to solve problems!`
-  },
-  'deepseek-pollinations': {
-    id: 'deepseek-pollinations',
-    label: '🔮 DeepSeek (Curious Explorer)',
-    category: 'general',
-    model_name: 'deepseek',
-    api_url: 'https://gen.pollinations.ai/v1/chat/completions',
-    platform: 'pollinations',
-    system_prompt: `You are DeepSeek, an AI with boundless curiosity and a love for exploration. You dive deep into topics, uncovering interesting connections and insights. You're enthusiastic about learning and sharing knowledge. You often provide fascinating context or "did you know" tidbits that make conversations richer and more engaging.`
-  },
-  'minimax-m2': {
-    id: 'minimax-m2',
-    label: '💻 MiniMax M2.1 (Code Architect)',
+  // Coding
+  'qwen-coder': {
+    id: 'qwen-coder',
+    label: '💻 Qwen 3 Coder',
     category: 'coding',
-    model_name: 'MiniMaxAI/MiniMax-M2.1',
-    api_url: 'https://router.huggingface.co/v1/chat/completions',
-    platform: 'huggingface',
-    system_prompt: `You are a senior software architect and coding expert. You write clean, efficient, well-documented code. You follow best practices, design patterns, and SOLID principles. When reviewing code, you're thorough but constructive. You explain your reasoning and suggest improvements. You're proficient in multiple languages but adapt your style to the project's conventions. Always include comments for complex logic.`
+    model_name: 'qwen-coder',
+    api_url: 'https://text.pollinations.ai/openai',
+    platform: 'pollinations',
+    system_prompt: `You are an expert software engineer with deep knowledge across multiple programming languages and frameworks. You write clean, efficient, and well-documented code. You follow best practices, design patterns, and SOLID principles. When reviewing or writing code, you're thorough but practical—explaining your reasoning and suggesting improvements. Always include meaningful comments for complex logic.`
   },
+  // Science & Tech
   'grok-4-fast': {
     id: 'grok-4-fast',
-    label: '⚡ Grok 4.1 (Speed Coder)',
-    category: 'coding',
+    label: '💡 Grok 4.1 Fast',
+    category: 'science',
     model_name: 'x-ai/grok-4.1-fast',
     api_url: 'https://openrouter.ai/api/v1/chat/completions',
     platform: 'openrouter',
     is_reasoning: true,
-    system_prompt: `You are Grok, a lightning-fast coding assistant with a hint of wit. You write code that's not just functional but elegant. You're direct—no fluff, just solutions. You anticipate follow-up questions and address edge cases proactively. You love a good optimization challenge and aren't afraid to suggest a completely different approach if it's better. Ship it! 🚀`
+    system_prompt: `You are a brilliant scientist and technology expert with deep knowledge in physics, chemistry, biology, computer science, and engineering. You explain complex scientific concepts clearly, using precise terminology while making ideas accessible. You love connecting different scientific domains and highlighting cutting-edge developments. When uncertain, you distinguish between established science and emerging theories.`
   },
+  'kimi-k2': {
+    id: 'kimi-k2',
+    label: '🧪 Kimi 2.5',
+    category: 'science',
+    model_name: 'moonshotai/Kimi-K2.5',
+    api_url: 'https://router.huggingface.co/v1/chat/completions',
+    platform: 'huggingface',
+    system_prompt: `You are a research scientist with expertise in cutting-edge technology and scientific advancements. You approach problems methodically, breaking down complex systems into understandable components. You excel at explaining technical concepts, analyzing research papers, and discussing emerging technologies. Your explanations balance depth with clarity.`
+  },
+  // Academics
+  'deepseek': {
+    id: 'deepseek',
+    label: '📚 DeepSeek 3.2',
+    category: 'academics',
+    model_name: 'deepseek',
+    api_url: 'https://text.pollinations.ai/openai',
+    platform: 'pollinations',
+    system_prompt: `You are a top MIT professor with a reputation for teaching even complex concepts thoroughly without overwhelming your students. You use relatable analogies and real-world examples to make abstract ideas concrete. Frame your answers using tables, lists, step-by-step breakdowns, and visual descriptions whenever they aid understanding. Be patient, encouraging, and thorough.`
+  },
+  // General
+  'gpt-oss-120b': {
+    id: 'gpt-oss-120b',
+    label: '🧠 GPT-OSS 120B',
+    category: 'general',
+    model_name: 'openai/gpt-oss-120b:free',
+    api_url: 'https://openrouter.ai/api/v1/chat/completions',
+    platform: 'openrouter',
+    is_reasoning: true,
+    system_prompt: `You are a thoughtful and versatile AI assistant. You excel at reasoning through complex problems, writing, analysis, and creative tasks. You think step by step, consider multiple perspectives, and provide comprehensive, well-structured responses. You're helpful, honest, and acknowledge when you're uncertain about something.`
+  },
+  'gemma-27b': {
+    id: 'gemma-27b',
+    label: '🌸 Gemma 3 27B',
+    category: 'general',
+    model_name: 'google/gemma-3-27b-it:free',
+    api_url: 'https://openrouter.ai/api/v1/chat/completions',
+    platform: 'openrouter',
+    system_prompt: `You are a thoughtful and empathetic AI assistant. You approach every question with genuine curiosity and care. You explain complex topics in accessible ways, often using helpful analogies. You're patient, encouraging, and always aim to help users understand, not just get answers. When you're uncertain, you say so honestly.`
+  },
+  // Fun
+  'llama-70b': {
+    id: 'llama-70b',
+    label: '😜 Llama 3.3 70B',
+    category: 'fun',
+    model_name: 'meta-llama/llama-3.3-70b-instruct:free',
+    api_url: 'https://openrouter.ai/api/v1/chat/completions',
+    platform: 'openrouter',
+    system_prompt: `You are a fun, creative, and witty AI companion! You love wordplay, jokes, creative writing, and playful banter. You're enthusiastic and bring positive energy to conversations. Whether it's telling stories, playing word games, brainstorming wild ideas, or just having a lighthearted chat, you make interactions enjoyable. You use emojis to add warmth! 🎈`
+  },
+  // Search
   'perplexity-fast': {
     id: 'perplexity-fast',
-    label: '🔍 Perplexity (Research Pro)',
+    label: '🔍 Perplexity Sonar',
     category: 'search',
     model_name: 'perplexity-fast',
-    api_url: 'https://gen.pollinations.ai/v1/chat/completions',
+    api_url: 'https://text.pollinations.ai/openai',
     platform: 'pollinations',
     system_prompt: `You are a research-focused AI assistant optimized for finding and synthesizing information. You provide accurate, well-sourced answers. When answering questions, you structure your response clearly with key facts upfront. You distinguish between well-established facts and emerging information. You cite sources when possible and acknowledge limitations in your knowledge.`
   },
-  'zimage-pollinations': {
-    id: 'zimage-pollinations',
-    label: '🎨 ZImage (Artistic Creator)',
+  // Image
+  'zimage': {
+    id: 'zimage',
+    label: '🎨 Z-Image Turbo',
     category: 'image',
     model_name: 'zimage',
-    api_url: 'https://gen.pollinations.ai/image/',
+    api_url: 'https://image.pollinations.ai/',
     platform: 'pollinations-image',
-    system_prompt: `You are an AI image generation assistant using the ZImage model. When users describe what they want to see, interpret their request creatively and generate beautiful, artistic images. If a prompt is vague, ask clarifying questions about style, mood, colors, or composition. You can suggest enhancements to make images more striking.`
-  },
-  'flux-klein': {
-    id: 'flux-klein',
-    label: '✨ FLUX Klein (Fast Artist)',
-    category: 'image',
-    model_name: 'black-forest-labs/flux.2-klein-4b',
-    api_url: 'https://openrouter.ai/api/v1/chat/completions',
-    platform: 'openrouter',
-    system_prompt: `You are an AI assistant with image generation capabilities powered by FLUX Klein. You help users create images by understanding their vision and translating it into effective prompts. You're knowledgeable about art styles, composition, lighting, and visual aesthetics. Guide users to get the best results from their image requests.`
-  },
-  'turbo-pollinations': {
-    id: 'turbo-pollinations',
-    label: '🚀 Turbo (Speed Artist)',
-    category: 'image',
-    model_name: 'turbo',
-    api_url: 'https://gen.pollinations.ai/image/',
-    platform: 'pollinations-image',
-    system_prompt: `You are an AI image generation assistant using the Turbo model—optimized for speed without sacrificing quality. You quickly interpret user requests and generate images in seconds. Perfect for rapid prototyping, brainstorming visual ideas, or when users need fast iterations. You're efficient and practical in your suggestions.`
+    system_prompt: `You are an AI image generation assistant. When users describe what they want to see, interpret their request creatively and generate beautiful, artistic images. If a prompt is vague, ask clarifying questions about style, mood, colors, or composition. You can suggest enhancements to make images more striking.`
   }
 };
 
 const PRESET_CATEGORIES = {
-  recent: '⏱️ Recently Used',
-  general: '💬 General Chat',
-  coding: '👨‍💻 Coding',
-  search: '🔎 Search',
-  image: '🖼️ Image Generation'
+  recent: 'Recently Used',
+  general: 'General',
+  fun: 'Fun',
+  coding: 'Coding',
+  science: 'Science & Tech',
+  academics: 'Academics',
+  search: 'Search',
+  image: 'Image'
 };
 
 const MAX_RECENT_PRESETS = 6;
@@ -373,7 +366,7 @@ function build_preset_options() {
     html += '</optgroup>';
   }
 
-  ['general', 'coding', 'search', 'image'].forEach(category => {
+  ['general', 'fun', 'coding', 'science', 'academics', 'search', 'image'].forEach(category => {
     const presets = Object.values(MODEL_PRESETS).filter(p => p.category === category);
     if (presets.length > 0) {
       html += `<optgroup label="${PRESET_CATEGORIES[category]}">`;
@@ -753,7 +746,7 @@ async function send_message(tab_id) {
     const abort_controller = new AbortController();
     app_state.pending_requests.set(tab_id, abort_controller);
 
-    const response = await send_chat_message(tab_id, full_message_content, tab.settings, {
+    const response = await send_chat_message(tab.settings, {
       messages: tab.messages,
       context_summaries: tab.context_summaries,
       signal: abort_controller.signal,
@@ -763,17 +756,31 @@ async function send_message(tab_id) {
     app_state.pending_requests.delete(tab_id);
     hide_typing_indicator(tab_id);
 
+    // Store request_id in user message for debug box
+    if (response.request_id) {
+      user_message.request_id = response.request_id;
+      // Update the rendered user message with debug box
+      append_debug_box(tab_id, user_message.id, response.request_id, 'request');
+    }
+
     if (response.success) {
       const ai_message = {
         id: generate_id(),
         role: 'assistant',
         content: response.content,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        request_id: response.request_id // Store request_id for debug
       };
 
       tab.messages.push(ai_message);
       tab.last_finish_reason = response.finish_reason;
       render_message(tab_id, ai_message);
+      
+      // Add debug box for AI response
+      if (response.request_id) {
+        append_debug_box(tab_id, ai_message.id, response.request_id, 'response');
+      }
+      
       update_retry_buttons(tab_id);
 
       // Add to recent presets on first successful message of this tab
@@ -787,7 +794,8 @@ async function send_message(tab_id) {
 
       await storage.save_tab_data(tab);
     } else {
-      render_error_in_chat(tab_id, response.error || 'Failed to get response');
+      // Render error with report button
+      render_error_in_chat(tab_id, response.error || 'Failed to get response', response.request_id, response.error_status);
     }
   } catch (err) {
     app_state.pending_requests.delete(tab_id);
@@ -816,7 +824,7 @@ async function handle_continue(tab_id) {
     const abort_controller = new AbortController();
     app_state.pending_requests.set(tab_id, abort_controller);
 
-    const response = await continue_response(tab_id, tab.settings, {
+    const response = await continue_response(tab.settings, {
       messages: tab.messages,
       context_summaries: tab.context_summaries,
       signal: abort_controller.signal
@@ -829,14 +837,20 @@ async function handle_continue(tab_id) {
       const last_message = tab.messages[tab.messages.length - 1];
       if (last_message && last_message.role === 'assistant') {
         last_message.content += response.content;
+        last_message.request_id = response.request_id; // Update request_id for continued response
         tab.last_finish_reason = response.finish_reason;
         update_message_content(tab_id, last_message.id, last_message.content);
+        
+        // Update debug box for continued response
+        if (response.request_id) {
+          update_debug_box(tab_id, last_message.id, response.request_id, 'response');
+        }
 
         if (response.finish_reason === 'length') show_continue_button(tab_id);
         await storage.save_tab_data(tab);
       }
     } else {
-      render_error_in_chat(tab_id, response.error || 'Failed to continue response');
+      render_error_in_chat(tab_id, response.error || 'Failed to continue response', response.request_id, response.error_status);
       show_continue_button(tab_id);
     }
   } catch (err) {
@@ -1214,7 +1228,7 @@ function update_retry_buttons(tab_id) {
   }
 }
 
-function render_error_in_chat(tab_id, error_message) {
+function render_error_in_chat(tab_id, error_message, request_id = null, error_status = null) {
   const panel = document.getElementById(`panel-${tab_id}`);
   const messages_container = panel?.querySelector('[data-field="chat-messages"]');
   if (!messages_container) return;
@@ -1225,8 +1239,200 @@ function render_error_in_chat(tab_id, error_message) {
   const error_el = frag.querySelector('.message-error');
   error_el.querySelector('.error-content').textContent = error_message;
 
+  // Classify error and potentially add report button
+  if (request_id) {
+    const error_type = classify_error({ status: error_status, message: error_message });
+    const should_report = should_report_error(error_type);
+    
+    if (should_report) {
+      const report_btn = document.createElement('button');
+      report_btn.className = 'error-report-btn';
+      report_btn.setAttribute('aria-label', 'Report this error');
+      report_btn.setAttribute('title', 'Report this error to help us improve');
+      report_btn.innerHTML = `${ICONS.file}<span>Report</span>`;
+      report_btn.addEventListener('click', () => handle_error_report(request_id, error_message, error_status));
+      error_el.querySelector('.message-header').appendChild(report_btn);
+    }
+  }
+
   messages_container.appendChild(frag);
   messages_container.scrollTop = messages_container.scrollHeight;
+}
+
+/**
+ * Handle error report button click
+ */
+async function handle_error_report(request_id, error_message, error_status) {
+  const debug_data = get_debug_data(request_id);
+  if (!debug_data) {
+    show_toast('Unable to collect error data', 'error');
+    return;
+  }
+
+  try {
+    const result = await handle_error({
+      status: error_status,
+      message: error_message,
+      api_url: debug_data.request?.url,
+      request_body: debug_data.request?.body,
+      response_body: debug_data.response?.raw
+    });
+
+    if (result.reported) {
+      show_toast('Error reported. Thank you for helping us improve!', 'success');
+    } else if (result.should_report) {
+      show_toast('Failed to send error report. Please try again.', 'error');
+    }
+  } catch (err) {
+    console.error('Error reporting failed:', err);
+    show_toast('Failed to send error report', 'error');
+  }
+}
+
+/**
+ * Append a debug box below a message
+ * @param {string} tab_id - Tab ID
+ * @param {string} message_id - Message ID
+ * @param {string} request_id - Request ID for debug data
+ * @param {string} type - 'request' or 'response'
+ */
+function append_debug_box(tab_id, message_id, request_id, type) {
+  const message_el = document.querySelector(`[data-message-id="${message_id}"]`);
+  if (!message_el) return;
+
+  const debug_data = get_debug_data(request_id);
+  if (!debug_data) return;
+
+  const data = type === 'request' ? debug_data.request : debug_data.response;
+  if (!data) return;
+
+  // Remove existing debug box of this type
+  const existing = message_el.querySelector(`.debug-box[data-debug-type="${type}"]`);
+  if (existing) existing.remove();
+
+  const debug_box = create_debug_box(data, type, request_id);
+  message_el.appendChild(debug_box);
+}
+
+/**
+ * Update an existing debug box (for continued responses)
+ */
+function update_debug_box(tab_id, message_id, request_id, type) {
+  const message_el = document.querySelector(`[data-message-id="${message_id}"]`);
+  if (!message_el) return;
+
+  const existing = message_el.querySelector(`.debug-box[data-debug-type="${type}"]`);
+  if (existing) {
+    const debug_data = get_debug_data(request_id);
+    if (debug_data) {
+      const data = type === 'request' ? debug_data.request : debug_data.response;
+      if (data) {
+        const content_el = existing.querySelector('.debug-box-content pre');
+        if (content_el) {
+          content_el.innerHTML = format_debug_json(data);
+        }
+      }
+    }
+  } else {
+    // No existing box, create new one
+    append_debug_box(tab_id, message_id, request_id, type);
+  }
+}
+
+/**
+ * Create a debug box element
+ * @param {Object} data - Debug data to display
+ * @param {string} type - 'request' or 'response'
+ * @param {string} request_id - Request ID
+ * @returns {HTMLElement} Debug box element
+ */
+function create_debug_box(data, type, request_id) {
+  const debug_box = document.createElement('div');
+  debug_box.className = 'debug-box';
+  debug_box.setAttribute('data-debug-type', type);
+  debug_box.setAttribute('data-request-id', request_id);
+
+  const header = document.createElement('button');
+  header.className = 'debug-box-header';
+  header.setAttribute('aria-expanded', 'false');
+  header.innerHTML = `
+    <span class="debug-box-arrow">▶</span>
+    <span class="debug-box-title">${type === 'request' ? 'Request' : 'Response'}</span>
+  `;
+
+  const content = document.createElement('div');
+  content.className = 'debug-box-content';
+  content.style.display = 'none';
+
+  const pre = document.createElement('pre');
+  pre.innerHTML = format_debug_json(data);
+  content.appendChild(pre);
+
+  header.addEventListener('click', () => {
+    const expanded = header.getAttribute('aria-expanded') === 'true';
+    header.setAttribute('aria-expanded', !expanded);
+    header.querySelector('.debug-box-arrow').textContent = expanded ? '▶' : '▼';
+    content.style.display = expanded ? 'none' : 'block';
+  });
+
+  debug_box.appendChild(header);
+  debug_box.appendChild(content);
+
+  return debug_box;
+}
+
+/**
+ * Format JSON data for debug display with truncation for long values
+ * @param {Object} data - Data to format
+ * @returns {string} Formatted HTML string
+ */
+function format_debug_json(data) {
+  const TRUNCATE_THRESHOLD = 500; // Characters threshold for truncation
+
+  function format_value(value, key, path) {
+    if (value === null) return '<span class="json-null">null</span>';
+    if (value === undefined) return '<span class="json-undefined">undefined</span>';
+
+    const type = typeof value;
+
+    if (type === 'string') {
+      // Check if string is too long
+      if (value.length > TRUNCATE_THRESHOLD) {
+        const truncated = escape_html(value.substring(0, 100)) + '...';
+        const full_value = value;
+        const copy_id = `copy_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+        return `<span class="json-string json-truncated">"${truncated}"</span>
+          <button class="debug-copy-btn" data-copy-id="${copy_id}" title="Copy full text (${value.length} characters - too long to display)">
+            ${ICONS.copy}
+          </button>
+          <span class="debug-full-value" data-copy-id="${copy_id}" style="display:none">${escape_html(full_value)}</span>`;
+      }
+      return `<span class="json-string">"${escape_html(value)}"</span>`;
+    }
+
+    if (type === 'number') return `<span class="json-number">${value}</span>`;
+    if (type === 'boolean') return `<span class="json-boolean">${value}</span>`;
+
+    if (Array.isArray(value)) {
+      if (value.length === 0) return '<span class="json-bracket">[]</span>';
+      const items = value.map((item, idx) => format_value(item, idx, `${path}[${idx}]`));
+      return `<span class="json-bracket">[</span>\n${items.map(i => '  ' + i).join(',\n')}\n<span class="json-bracket">]</span>`;
+    }
+
+    if (type === 'object') {
+      const keys = Object.keys(value);
+      if (keys.length === 0) return '<span class="json-bracket">{}</span>';
+      const pairs = keys.map(k => {
+        const formatted = format_value(value[k], k, `${path}.${k}`);
+        return `  <span class="json-key">"${escape_html(k)}"</span>: ${formatted}`;
+      });
+      return `<span class="json-bracket">{</span>\n${pairs.join(',\n')}\n<span class="json-bracket">}</span>`;
+    }
+
+    return escape_html(String(value));
+  }
+
+  return format_value(data, '', '');
 }
 
 /* File Attachments */
@@ -1647,6 +1853,17 @@ function setup_event_delegation() {
       const btn = e.target.closest('.code-block-copy');
       const code = btn.closest('.code-block-wrapper')?.querySelector('code');
       if (code) copy_to_clipboard(code.textContent, btn);
+      return;
+    }
+
+    // Copy debug truncated value
+    if (e.target.closest('.debug-copy-btn')) {
+      const btn = e.target.closest('.debug-copy-btn');
+      const copy_id = btn.getAttribute('data-copy-id');
+      const full_value_el = document.querySelector(`.debug-full-value[data-copy-id="${copy_id}"]`);
+      if (full_value_el) {
+        copy_to_clipboard(full_value_el.textContent, btn);
+      }
       return;
     }
 

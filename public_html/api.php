@@ -159,7 +159,7 @@ function make_request($url, $headers, $payload = null, $method = 'POST') {
     return [$response, $http_code, $content_type];
 }
 
-/* Check if platform supports Llama 3.1 8B for summarization */
+/* Check if platform supports Gemma 3 27B for summarization */
 function supports_summarization($url) {
     foreach (SUMMARIZATION_CAPABLE_PATTERNS as $pattern) {
         if (stripos($url, $pattern) !== false) return true;
@@ -167,7 +167,10 @@ function supports_summarization($url) {
     return false;
 }
 
-/* Server-side summarization using fallback HF token */
+/* 
+ * Server-side summarization using fallback token (Gemma 3 12B)
+ * Used when user doesn't have their own API token
+ */
 function summarize_with_fallback($messages) {
     if (empty(FALLBACK_TOKEN)) {
         throw new Exception("Server-side summarization not configured");
@@ -205,7 +208,7 @@ function summarize_with_fallback($messages) {
     return $data['choices'][0]['message']['content'] ?? 'Summary unavailable';
 }
 
-/* GET requests (image proxying) */
+/* GET requests - Image proxying and URL fetching */
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
         $url = $_GET['url'] ?? null;
@@ -252,10 +255,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $api_url = $json_input['url'] ?? $json_input['api_url'] ?? $_POST['api_url'] ?? '';
         $token = $json_input['token'] ?? $_POST['token'] ?? '';
         
-        // Load config (may modify $token for logged-in admins)
+        /* Load config (may override $token for logged-in admins) */
         if (file_exists("../resources/config.php")) require_once("../resources/config.php");
         
-        /* Summarize action */
+        /* 
+         * Summarize action - Uses Gemma 3 27B with user token, 
+         * falls back to Gemma 3 12B with server token 
+         */
         if ($action === 'summarize') {
             $messages = $json_input['messages'] ?? null;
             
@@ -267,13 +273,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if ($use_user_token) {
                 $summarize_url = $api_url;
-                $summarize_model = 'meta-llama/llama-3.1-8b-instruct';
+                $summarize_model = 'google/gemma-3-27b-it';
                 
-                /* Platform-specific model names */
+                /* Platform-specific model names for Gemma 3 27B */
                 if (stripos($api_url, 'openrouter.ai') !== false) {
-                    $summarize_model = 'meta-llama/llama-3.1-8b-instruct:free';
+                    $summarize_model = 'google/gemma-3-27b-it:free';
                 } elseif (stripos($api_url, 'together.xyz') !== false) {
-                    $summarize_model = 'meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo';
+                    $summarize_model = 'google/gemma-2-27b-it';
                 }
                 
                 $messages_text = "";
@@ -319,11 +325,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
         
-        /* Proxy action (default) */
+        /* 
+         * Proxy action (default) - Forwards requests to external AI APIs
+         * Handles both text completions and image generation 
+         */
         $payload = $json_input['body'] ?? $json_input['payload'] ?? null;
         $request_method = $json_input['method'] ?? 'POST';
         
-        // Handle GET requests (e.g., Pollinations image API)
+        /* Handle GET requests (e.g., Pollinations image API) */
         if ($request_method === 'GET' && $api_url) {
             $headers = [];
             if ($token) {
@@ -363,6 +372,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
         
+        /* Build payload from form data if not provided as JSON */
         if (!$payload && isset($_POST['model'])) {
             $model = $_POST['model'];
             $u_prompt = $_POST['prompt'] ?? '';
@@ -380,6 +390,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ];
         }
         
+        /* Validate request parameters */
         if (!$api_url) {
             throw new Exception("API URL not specified");
         }
@@ -392,6 +403,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("Invalid API URL");
         }
         
+        /* Prepare request headers */
         $payload_json = is_string($payload) ? $payload : json_encode($payload);
         $headers = [
             "Content-Type: application/json"
@@ -401,13 +413,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $headers[] = "Authorization: Bearer $token";
         }
         
+        /* HuggingFace-specific headers to wait for model loading */
         if (stripos($api_url, 'huggingface.co') !== false) {
             $headers[] = "x-wait-for-model: true";
             $headers[] = "x-use-cache: false";
         }
         
+        /* Make the request and handle response */
         [$response, $http_code, $content_type] = make_request($api_url, $headers, $payload_json);
         
+        /* Handle image responses - convert to base64 data URL */
         if (strpos($content_type, 'image/') === 0) {
             $base64 = base64_encode($response);
             $mime = explode(';', $content_type)[0];
@@ -418,6 +433,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'data' => "data:$mime;base64,$base64"
             ]);
         } else {
+            /* Pass through JSON/text responses */
             http_response_code($http_code);
             header("Content-Type: $content_type");
             echo $response;

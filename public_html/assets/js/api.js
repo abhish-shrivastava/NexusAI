@@ -1,15 +1,52 @@
 /* NexusAI API Module - Request orchestration and context management */
 
-import { get_adapter, has_llama_models } from './adapters/index.js';
-import { helpers } from './adapters/base.js';
+import { get_adapter } from './adapters/index.js';
+import { classify_error, handle_error, should_report_error } from './error.js';
 
 const CONFIG = {
   PROXY_URL: 'api.php',
   SUMMARIZE_URL: 'api.php',
-  DEFAULT_CONTEXT_MESSAGES: 30,
-  SUMMARIZATION_MODEL: 'google/gemma-3-12b-it:free',
-  SUMMARIZATION_ENDPOINT: 'https://openrouter.ai/api/v1/chat/completions'
+  DEFAULT_CONTEXT_MESSAGES: 30
 };
+
+// Store for debug data (request/response pairs)
+// Keyed by a unique request ID
+const debug_store = new Map();
+
+/**
+ * Generate a unique request ID
+ */
+function generate_request_id() {
+  return `req_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+/**
+ * Store debug data for a request
+ * @param {string} request_id - Unique request ID
+ * @param {Object} data - Debug data (request, response, etc.)
+ */
+export function store_debug_data(request_id, data) {
+  debug_store.set(request_id, {
+    ...debug_store.get(request_id),
+    ...data,
+    timestamp: Date.now()
+  });
+  
+  // Clean old entries (keep last 100)
+  if (debug_store.size > 100) {
+    const oldest = debug_store.keys().next().value;
+    debug_store.delete(oldest);
+  }
+}
+
+/**
+ * Get debug data for a request
+ * @param {string} request_id - Unique request ID
+ * @returns {Object|null} Debug data or null if not found
+ */
+export function get_debug_data(request_id) {
+  return debug_store.get(request_id) || null;
+}
 
 /* Extract error message from various error response formats */
 function extract_error_message(data) {
@@ -34,8 +71,9 @@ function extract_error_message(data) {
 }
 
 /* Send a chat message */
-export async function send_chat_message(tab_id, user_message, settings, context = {}) {
+export async function send_chat_message(settings, context = {}) {
   const { messages = [], context_summaries = [], signal } = context;
+  const request_id = generate_request_id();
 
   try {
     const context_messages = await build_context(messages, settings, context_summaries);
@@ -46,9 +84,12 @@ export async function send_chat_message(tab_id, user_message, settings, context 
     }
     api_messages.push(...context_messages);
 
-    const response = await send_request({ messages: api_messages }, settings, signal);
+    const response = await send_request({ messages: api_messages }, settings, signal, request_id);
     
-    return response;
+    return {
+      ...response,
+      request_id
+    };
 
   } catch (error) {
     if (error.name === 'AbortError') {
@@ -57,14 +98,16 @@ export async function send_chat_message(tab_id, user_message, settings, context 
     console.error('send_chat_message error:', error);
     return {
       success: false,
-      error: error.message || 'Failed to send message'
+      error: error.message || 'Failed to send message',
+      request_id
     };
   }
 }
 
 /* Continue a truncated response */
-export async function continue_response(tab_id, settings, context = {}) {
+export async function continue_response(settings, context = {}) {
   const { messages = [], signal } = context;
+  const request_id = generate_request_id();
 
   try {
     const api_messages = [];
@@ -77,9 +120,12 @@ export async function continue_response(tab_id, settings, context = {}) {
     api_messages.push(...recent);
     api_messages.push({ role: 'user', content: 'Please continue from where you left off.' });
 
-    const response = await send_request({ messages: api_messages }, settings, signal);
+    const response = await send_request({ messages: api_messages }, settings, signal, request_id);
     
-    return response;
+    return {
+      ...response,
+      request_id
+    };
 
   } catch (error) {
     if (error.name === 'AbortError') {
@@ -88,13 +134,14 @@ export async function continue_response(tab_id, settings, context = {}) {
     console.error('continue_response error:', error);
     return {
       success: false,
-      error: error.message || 'Failed to continue response'
+      error: error.message || 'Failed to continue response',
+      request_id
     };
   }
 }
 
 /* Routes request through appropriate adapter based on API URL, handles proxy/direct modes */
-async function send_request(payload, settings, signal = null) {
+async function send_request(payload, settings, signal = null, request_id = null) {
   const adapter = get_adapter(settings.api_url);
   
   try {
@@ -102,6 +149,19 @@ async function send_request(payload, settings, signal = null) {
     const headers = adapter.get_headers(settings);
     const method = adapter.get_method ? adapter.get_method() : 'POST';
     const use_direct = settings.direct_api;
+    
+    // Store request debug data (sanitize token - check if it's a fallback token)
+    if (request_id) {
+      const is_user_token = settings.api_token && settings.api_token.length > 0;
+      store_debug_data(request_id, {
+        request: {
+          url: settings.api_url,
+          method: method,
+          headers: sanitize_headers_for_debug(headers, is_user_token),
+          body: request_data
+        }
+      });
+    }
     
     let response;
     if (use_direct) {
@@ -114,7 +174,18 @@ async function send_request(payload, settings, signal = null) {
     
     if (parsed._async && parsed.task_id) {
       console.log('Async task detected, polling...', parsed.task_id);
-      parsed = await poll_for_result(adapter, settings, parsed.task_id, headers, use_direct, signal);
+      parsed = await poll_for_result(adapter, settings, parsed.task_id, headers, use_direct, signal, request_id);
+    }
+    
+    // Store response debug data
+    if (request_id) {
+      store_debug_data(request_id, {
+        response: {
+          raw: response.data,
+          parsed: parsed,
+          content_type: response.content_type
+        }
+      });
     }
     
     return {
@@ -131,23 +202,50 @@ async function send_request(payload, settings, signal = null) {
     
     console.error('API request failed:', error);
     
+    // Store error in debug data
+    if (request_id) {
+      store_debug_data(request_id, {
+        response: {
+          error: true,
+          message: error.message,
+          status: error.status
+        }
+      });
+    }
+    
     // Check for CORS error
     if (error.message?.includes('CORS') || error.message?.includes('NetworkError') || error.message?.includes('Failed to fetch')) {
       return {
         success: false,
-        error: 'CORS error: Please disable "Direct API" in settings to use the proxy.'
+        error: 'CORS error: Please disable "Direct API" in settings to use the proxy.',
+        error_status: error.status
       };
     }
     
     return {
       success: false,
-      error: error.message || 'Request failed'
+      error: error.message || 'Request failed',
+      error_status: error.status
     };
   }
 }
 
+/**
+ * Sanitize headers for debug display - hide token if using fallback
+ * @param {Object} headers - Request headers
+ * @param {boolean} is_user_token - Whether user provided their own token
+ * @returns {Object} Sanitized headers
+ */
+function sanitize_headers_for_debug(headers, is_user_token) {
+  const sanitized = { ...headers };
+  if (sanitized['Authorization'] && !is_user_token) {
+    sanitized['Authorization'] = '[Server Token - Hidden]';
+  }
+  return sanitized;
+}
+
 /* Poll for async task result */
-async function poll_for_result(adapter, settings, task_id, headers, use_direct, signal) {
+async function poll_for_result(adapter, settings, task_id, headers, use_direct, signal, request_id = null) {
   const MAX_POLLS = 60;
   const POLL_INTERVAL = 2000;
   
@@ -176,6 +274,19 @@ async function poll_for_result(adapter, settings, task_id, headers, use_direct, 
         console.log(`Poll ${i + 1}/${MAX_POLLS}: Processing...`);
         continue;
       }
+      
+      // Store final poll response in debug data
+      if (request_id) {
+        store_debug_data(request_id, {
+          response: {
+            raw: response.data,
+            parsed: parsed,
+            content_type: response.content_type,
+            poll_count: i + 1
+          }
+        });
+      }
+      
       return parsed;
       
     } catch (error) {

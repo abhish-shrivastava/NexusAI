@@ -7,6 +7,7 @@ public_html/login.php
 public_html/create-user.php
 public_html/yaatayat.php
 public_html/production.php
+public_html/error_report.php
 public_html/.htaccess
 public_html/assets/js/production.js
 resources/functions.php

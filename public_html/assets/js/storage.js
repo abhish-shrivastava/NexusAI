@@ -46,13 +46,27 @@ async function get_db() {
 
 /* Tab Operations */
 
+/* 
+ * Save tab data to IndexedDB
+ * Strips debug-related fields (request_id) from messages before saving
+ * to ensure only essential data is persisted
+ */
 async function save_tab_data(tab_data) {
   const database = await get_db();
+  
+  /* Clone tab data and strip request_id from messages */
+  const clean_tab = {
+    ...tab_data,
+    messages: tab_data.messages.map(msg => {
+      const { request_id, ...clean_msg } = msg;
+      return clean_msg;
+    })
+  };
   
   return new Promise((resolve, reject) => {
     const transaction = database.transaction([STORE_NAME], 'readwrite');
     const store = transaction.objectStore(STORE_NAME);
-    const request = store.put(tab_data);
+    const request = store.put(clean_tab);
 
     request.onsuccess = () => resolve();
     request.onerror = () => reject(request.error);

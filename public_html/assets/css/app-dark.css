@@ -230,20 +230,9 @@
   background-color: var(--color-accent);
 }
 
-[data-theme="dark"] .message-ai .message-avatar {
-  background-color: #4e4e4e;
-}
-
 [data-theme="dark"] .message-content {
   border-color: #2d2d2d;
-}
-
-[data-theme="dark"] .message-user .message-content {
   background-color: #252526;
-}
-
-[data-theme="dark"] .message-ai .message-content {
-  background-color: #1e1e1e;
 }
 
 [data-theme="dark"] .message-copy-btn {
@@ -619,6 +608,48 @@
 [data-theme="dark"] .message-retry-btn:hover {
   background-color: #3e3e3e;
   color: #0078d4;
+}
+
+/* ===================================
+   Debug Boxes (Dark Mode)
+   =================================== */
+
+[data-theme="dark"] .debug-box-header {
+  color: #9d9d9d;
+}
+
+[data-theme="dark"] .debug-box-header:hover {
+  background: #2d2d2d;
+}
+
+[data-theme="dark"] .debug-box-arrow {
+  color: #6e6e6e;
+}
+
+[data-theme="dark"] .debug-box-content {
+  background: #1e1e1e;
+}
+
+[data-theme="dark"] .debug-copy-btn {
+  background: #2d2d2d;
+  border-color: #3e3e3e;
+  color: #6e6e6e;
+}
+
+[data-theme="dark"] .debug-copy-btn:hover {
+  background: #3e3e3e;
+  color: #0078d4;
+  border-color: #0078d4;
+}
+
+[data-theme="dark"] .error-report-btn {
+  border-color: rgba(248, 113, 113, 0.3);
+  color: #f87171;
+}
+
+[data-theme="dark"] .error-report-btn:hover {
+  background: rgba(248, 113, 113, 0.1);
+  border-color: #f87171;
 }
 
 /* ===================================
